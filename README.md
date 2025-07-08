@@ -1,64 +1,44 @@
-# Install-LocalNupkgModule.ps1
-Workaround for persistent network issues while attempting to download and install powershell modules.
+# Install-LocalGraphModule.ps1
 
-This PowerShell script simplifies the process of installing a PowerShell module from a `.nupkg` file. It extracts the module, installs it to the user's local module path, and imports it for immediate use.
+## Overview
 
-## 🛠Features
+This PowerShell script downloads and installs all Microsoft.Graph sub-modules from the PowerShell Gallery using direct HTTP requests with retry logic. It is designed for environments with unreliable internet or DNS resolution issues.
 
-- Prompts for the path to a `.nupkg` file  
-- Validates the file exists  
-- Extracts module name and version from the filename  
-- Unpacks the `.nupkg` archive  
-- Installs the module to the user's PowerShell module directory  
-- Imports the module and verifies installation  
+## Features
 
-## Prerequisites
-
-- PowerShell 5.1 or later  
-- The `.nupkg` file must follow the naming convention: `ModuleName.Version.nupkg`  
-  - Example: `MyModule.1.0.0.nupkg`
+- Recursively downloads Microsoft.Graph modules and their dependencies
+- Retries failed HTTP requests (e.g., due to DNS failures)
+- Builds a local NuGet-compatible repository from `.nupkg` files
+- Installs modules from the local feed using `Install-Module`
+- Supports `Download`, `Install`, or `Both` modes
+- Prompts for `PSModulePath` selection
+- Validates administrator privileges before installation
 
 ## Usage
 
-1. Open PowerShell.
-2. Run the script.
-3. When prompted, enter the full path to the `.nupkg` file:
-
 ```powershell
-Enter the full path to the downloaded .nupkg file: C:\Path\To\YourModule.1.0.0.nupkg
+# Download and install modules
+.\Install-LocalGraphModule.ps1 -Action Both -Path "C:\GraphModules"
+
+# Download only
+.\Install-LocalGraphModule.ps1 -Action Download -Path "C:\GraphModules"
+
+# Install only (from previously downloaded .nupkg files)
+.\Install-LocalGraphModule.ps1 -Action Install -Path "C:\GraphModules"
 ```
 
-The script will:
+## Requirements
 
-- Extract the .nupkg file to a temporary directory
-- Copy the module files to your PowerShell modules folder
-- Import the module
-- Display the installed module details
+- PowerShell 5.1 or later
+- Internet access (for downloading modules and nuget.exe)
+- Administrator privileges (for installing modules globally)
 
-# Installation Path
+## Notes
 
-Modules are installed to:
+- The script uses nuget.exe to build a local feed. It will download it automatically if not present.
+- The script skips the Microsoft.Graph meta-package intentionally.
 
-```powershell
-$env:USERPROFILE\Documents\WindowsPowerShell\Modules
-```
+## Troubleshooting
 
-# Example Output
-
-```powershell
-Extracting package...
-Installing module to C:\Users\YourName\Documents\WindowsPowerShell\Modules\YourModule...
-Importing module...
-Installed modules:
-
-    Directory: C:\Users\YourName\Documents\WindowsPowerShell\Modules
-
-ModuleType Version    Name        ExportedCommands
----------- -------    ----        ----------------
-Script     1.0.0      YourModule  {Get-YourCommand, Set-YourCommand}
-```
-
-# Notes
-
-- Ensure the .nupkg file is not corrupted and follows the expected naming format.
-- The script uses Expand-Archive, which is available in PowerShell 5.1+.
+- If modules fail to install, ensure the .nupkg files are valid and the feed is correctly initialized.
+- Use -Verbose to see detailed output during execution.
